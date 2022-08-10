@@ -3,28 +3,21 @@ package com.example.demo.controller;
 import com.example.demo.dto.TodoDto;
 import com.example.demo.model.TodoEntity;
 import com.example.demo.repository.TodoRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.*;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 
-import static org.assertj.core.api.InstanceOfAssertFactories.collection;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TodoControllerTest {
     @LocalServerPort
@@ -41,9 +34,8 @@ public class TodoControllerTest {
         todoRepository.deleteAll();
     }
 
-
     @Test
-    public void putPostsTest() throws Exception {
+    public void postTest() throws Exception {
         //given
         String title = "테스트 포스트1";
         TodoDto todoDto = TodoDto.builder()
@@ -58,5 +50,37 @@ public class TodoControllerTest {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         List<TodoEntity> todoEntities = todoRepository.findAll();
         assertThat(todoEntities.get(0).getTitle()).isEqualTo(title);
+    }
+
+    @Test
+    public void updateTest() throws Exception {
+        //given
+        String title = "테스트 포스트1";
+        TodoDto todoDto = TodoDto.builder()
+                .title(title)
+                .build();
+        String url = "http://localhost:" + port + "/todo";
+        restTemplate.postForEntity(url, todoDto, String.class);
+
+        String targetPostId = todoRepository.findAll().get(0).getId();
+        String expectedTitle = "테스트 포스트 수정1";
+        boolean expectedDone = true;
+
+        TodoDto updateTodoDto = TodoDto.builder()
+                .id(targetPostId)
+                .title(expectedTitle)
+                .done(expectedDone)
+                .build();
+
+        HttpEntity<TodoDto> requestEntity = new HttpEntity<>(updateTodoDto);
+
+        //when
+        ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, requestEntity, String.class);
+
+        //then
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<TodoEntity> todoEntities = todoRepository.findAll();
+        assertThat(todoEntities.get(0).getTitle()).isEqualTo(expectedTitle);
+        assertThat(todoEntities.get(0).isDone()).isEqualTo(expectedDone);
     }
 }
