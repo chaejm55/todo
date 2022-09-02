@@ -11,7 +11,7 @@ import javax.persistence.Table;
 @Builder
 @NoArgsConstructor // 필수조건 1
 @AllArgsConstructor
-@Getter
+@Getter // @Data 대신 Getter만 생성
 @Entity
 @Table(name = "Todo")
 public class TodoEntity {
@@ -23,16 +23,19 @@ public class TodoEntity {
     private String title;
     private boolean done;
 
+    // setter 대신 사용
     public void makeInitialUserInfo(String id, String userId) {
         this.id = id;
         this.userId = userId;
     }
+
 
     public void overwriteInfo(TodoEntity entity) {
         this.title = entity.getTitle();
         this.done = entity.isDone();
     }
 
+    // setter 대신 사용
     public void makeTempUserId(String tempUserId) {
         this.userId = tempUserId;
     }
